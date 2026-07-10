@@ -1,0 +1,33 @@
+name: security
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  curated-secret-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Run curated secret audit
+        run: python scripts/curated_secret_check.py
+
+      - name: Run self-scan on docs
+        run: python -m promptleak_scrubber scan docs
