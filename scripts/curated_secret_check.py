@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -13,6 +12,7 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".yml", ".yaml", ".json"}
 EXCLUDED_PARTS = {".git", "__pycache__", "tests"}
+EXCLUDED_FILES = {"scripts/curated_secret_check.py"}
 
 
 def iter_files(repo_root: Path):
@@ -20,6 +20,9 @@ def iter_files(repo_root: Path):
         if not path.is_file():
             continue
         if any(part in EXCLUDED_PARTS for part in path.parts):
+            continue
+        relative = path.relative_to(repo_root).as_posix()
+        if relative in EXCLUDED_FILES:
             continue
         if path.suffix.lower() not in TEXT_SUFFIXES:
             continue

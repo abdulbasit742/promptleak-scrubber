@@ -44,9 +44,12 @@ class CliTests(unittest.TestCase):
             with redirect_stdout(stdout):
                 return_code = main(["redact", str(input_path), "--output", str(output_path)])
 
+            output_exists = output_path.exists()
+            redacted_text = output_path.read_text(encoding="utf-8") if output_exists else ""
+
         self.assertEqual(return_code, 0)
-        self.assertTrue(output_path.exists())
-        self.assertNotIn("alice@example.com", output_path.read_text(encoding="utf-8"))
+        self.assertTrue(output_exists)
+        self.assertNotIn("alice@example.com", redacted_text)
         self.assertIn("Redacted 1 finding", stdout.getvalue())
 
 
