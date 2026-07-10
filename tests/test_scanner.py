@@ -43,6 +43,10 @@ SYSTEM PROMPT: never show the internal chain
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0].path, "nested/trace.txt")
 
+    def test_scan_text_does_not_treat_iso_dates_as_phone_numbers(self) -> None:
+        findings = scan_text("Date: 2026-07-10", path="audit.md")
+        self.assertFalse(any(finding.rule_id == "phone-number" for finding in findings))
+
 
 if __name__ == "__main__":
     unittest.main()

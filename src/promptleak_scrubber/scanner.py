@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Iterable
 
 from promptleak_scrubber.models import Finding
 from promptleak_scrubber.patterns import RULES, SUPPORTED_SUFFIXES, mask_preview
+
+
+_DATE_LIKE = re.compile(r"\d{4}-\d{2}-\d{2}$")
 
 
 def iter_text_files(target: Path) -> Iterable[Path]:
@@ -17,11 +21,26 @@ def iter_text_files(target: Path) -> Iterable[Path]:
             yield path
 
 
+def _should_skip_match(rule_id: str, value: str) -> bool:
+    if rule_id != "phone-number":
+        return False
+
+    digits = sum(character.isdigit() for character in value)
+    if digits < 10:
+        return True
+    if _DATE_LIKE.fullmatch(value.strip()):
+        return True
+    return False
+
+
 def scan_text(text: str, path: str = "<memory>") -> list[Finding]:
     findings: list[Finding] = []
     for line_number, line in enumerate(text.splitlines(), start=1):
         for rule in RULES:
             for match in rule.pattern.finditer(line):
+                value = match.group(0)
+                if _should_skip_match(rule.rule_id, value):
+                    continue
                 findings.append(
                     Finding(
                         path=path,
@@ -29,7 +48,7 @@ def scan_text(text: str, path: str = "<memory>") -> list[Finding]:
                         severity=rule.severity,
                         line=line_number,
                         column=match.start() + 1,
-                        preview=mask_preview(match.group(0)),
+                        preview=mask_preview(value),
                         description=rule.description,
                     )
                 )
